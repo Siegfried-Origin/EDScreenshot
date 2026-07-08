@@ -112,40 +112,40 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Zip Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Zip Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -219,11 +219,9 @@
     <OutDir>$(SolutionDir)builds\x$(PlatformArchitecture)\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)bin\x$(PlatformArchitecture)\$(Configuration)\</IntDir>
   </PropertyGroup>
-
-<!-- - - - - - - - - - - - - - - - -->
-<!--         Debug Win32           -->
-<!-- - - - - - - - - - - - - - - - -->
-
+  <!-- - - - - - - - - - - - - - - - -->
+  <!--         Debug Win32           -->
+  <!-- - - - - - - - - - - - - - - - -->
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -270,11 +268,9 @@ call "$(SolutionDir)CopyToGames.bat" "$(TargetDir)" "$(TargetedSDKArchitecture)"
       <Message>Copy all Dependencies to target directory.</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
-  
-<!-- - - - - - - - - - - - - - - - -->
-<!--        Release Win32          -->
-<!-- - - - - - - - - - - - - - - - -->
-
+  <!-- - - - - - - - - - - - - - - - -->
+  <!--        Release Win32          -->
+  <!-- - - - - - - - - - - - - - - - -->
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -327,11 +323,9 @@ call "$(SolutionDir)CopyToGames.bat" "$(TargetDir)" "$(TargetedSDKArchitecture)"
       <Message>Copy all Dependencies to target directory.</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
-  
-<!-- - - - - - - - - - - - - - - - -->
-<!--      Zip Release Win32        -->
-<!-- - - - - - - - - - - - - - - - -->
-
+  <!-- - - - - - - - - - - - - - - - -->
+  <!--      Zip Release Win32        -->
+  <!-- - - - - - - - - - - - - - - - -->
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Zip Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -382,11 +376,9 @@ xcopy "$(SolutionDir)Dependencies\*.*" "$(TargetDir)"  /E /Y /S
       <Message>Copy all Dependencies to target directory.</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
-  
-<!-- - - - - - - - - - - - - - - - -->
-<!--          Debug x64            -->
-<!-- - - - - - - - - - - - - - - - -->
-
+  <!-- - - - - - - - - - - - - - - - -->
+  <!--          Debug x64            -->
+  <!-- - - - - - - - - - - - - - - - -->
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -433,11 +425,9 @@ call "$(SolutionDir)CopyToGames.bat" "$(TargetDir)" "$(TargetedSDKArchitecture)"
       <Message>Copy all Dependencies to target directory.</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
-  
-<!-- - - - - - - - - - - - - - - - -->
-<!--         Release x64           -->
-<!-- - - - - - - - - - - - - - - - -->
-
+  <!-- - - - - - - - - - - - - - - - -->
+  <!--         Release x64           -->
+  <!-- - - - - - - - - - - - - - - - -->
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -488,11 +478,9 @@ call "$(SolutionDir)CopyToGames.bat" "$(TargetDir)" "$(TargetedSDKArchitecture)"
       <Message>Copy all Dependencies to target directory.</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
-  
-<!-- - - - - - - - - - - - - - - - -->
-<!--       Zip Release x64         -->
-<!-- - - - - - - - - - - - - - - - -->
-
+  <!-- - - - - - - - - - - - - - - - -->
+  <!--       Zip Release x64         -->
+  <!-- - - - - - - - - - - - - - - - -->
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Zip Release|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -543,7 +531,6 @@ xcopy "$(SolutionDir)Dependencies\*.*" "$(TargetDir)"  /E /Y /S
       <Message>Copy all Dependencies to target directory.</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
-  
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
