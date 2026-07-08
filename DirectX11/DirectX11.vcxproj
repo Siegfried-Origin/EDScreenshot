@@ -47,6 +47,7 @@
     <ClCompile Include="D3D11Wrapper.cpp" />
     <ClCompile Include="DLLMainHook.cpp" />
     <ClCompile Include="FrameAnalysis.cpp" />
+    <ClCompile Include="FrameExport.cpp" />
     <ClCompile Include="HackerContext.cpp" />
     <ClCompile Include="HackerDevice.cpp" />
     <ClCompile Include="HackerDXGI.cpp" />
@@ -79,6 +80,7 @@
     <ClInclude Include="D3D11Wrapper.h" />
     <ClInclude Include="DLLMainHook.h" />
     <ClInclude Include="FrameAnalysis.h" />
+    <ClInclude Include="FrameExport.h" />
     <ClInclude Include="Globals.h" />
     <ClInclude Include="HackerContext.h" />
     <ClInclude Include="HackerDevice.h" />
@@ -388,15 +390,7 @@ xcopy "$(SolutionDir)Dependencies\*.*" "$(TargetDir)"  /E /Y /S
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <ExceptionHandling>Async</ExceptionHandling>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>
-$(SolutionDir);
-$(SolutionDir)HLSLDecompiler;
-$(SolutionDir)ThirdPartyLibs\Nektra-lib;
-$(SolutionDir)ThirdPartyLibs\nvapi-lib\nvapi-main;
-$(SolutionDir)ThirdPartyLibs\pcre2-lib\pcre2_x64-windows-static\include;
-$(SolutionDir)ThirdPartyLibs\DirectXTK-lib\include;
-$(SolutionDir)D3D_Shaders;
-      </AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)HLSLDecompiler;$(SolutionDir)ThirdPartyLibs\Nektra-lib;$(SolutionDir)ThirdPartyLibs\nvapi-lib\nvapi-main;$(SolutionDir)ThirdPartyLibs\pcre2-lib\pcre2_x64-windows-static\include;$(SolutionDir)ThirdPartyLibs\DirectXTK-lib\include;$(SolutionDir)D3D_Shaders;$(SolutionDir)ThirdPartyLibs\tiff\deps\include;$(SolutionDir)ThirdPartyLibs\tinyexr;$(SolutionDir)ThirdPartyLibs\stb</AdditionalIncludeDirectories>
       <BufferSecurityCheck>true</BufferSecurityCheck>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -404,18 +398,7 @@ $(SolutionDir)D3D_Shaders;
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ModuleDefinitionFile>d3d11Wrapper.def</ModuleDefinitionFile>
-      <AdditionalDependencies>
-$(SolutionDir)ThirdPartyLibs\Nektra-lib\NktHookLib64_Debug.lib;
-$(SolutionDir)ThirdPartyLibs\nvapi-lib\nvapi-main\amd64\nvapi64.lib;
-$(SolutionDir)ThirdPartyLibs\pcre2-lib\pcre2_x64-windows-static\debug\lib\pcre2-8d.lib;
-$(SolutionDir)ThirdPartyLibs\DirectXTK-lib\lib\x64\Debug\DirectXTK.lib;
-XINPUT9_1_0.lib;
-d3dcompiler.lib;
-DXGI.lib;
-Shlwapi.lib;
-Dbghelp.lib;
-%(AdditionalDependencies)
-      </AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)ThirdPartyLibs\Nektra-lib\NktHookLib64_Debug.lib;$(SolutionDir)ThirdPartyLibs\nvapi-lib\nvapi-main\amd64\nvapi64.lib;$(SolutionDir)ThirdPartyLibs\pcre2-lib\pcre2_x64-windows-static\debug\lib\pcre2-8d.lib;$(SolutionDir)ThirdPartyLibs\DirectXTK-lib\lib\x64\Debug\DirectXTK.lib;XINPUT9_1_0.lib;d3dcompiler.lib;DXGI.lib;Shlwapi.lib;Dbghelp.lib;$(SolutionDir)ThirdPartyLibs\tiff\deps\lib\tiff.lib;$(SolutionDir)ThirdPartyLibs\tiff\deps\lib\tiffxx.lib;$(SolutionDir)ThirdPartyLibs\tiff\deps\lib\libzs.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ForceSymbolReferences>CreateDXGIFactory</ForceSymbolReferences>
     </Link>
     <PostBuildEvent>
@@ -438,15 +421,7 @@ call "$(SolutionDir)CopyToGames.bat" "$(TargetDir)" "$(TargetedSDKArchitecture)"
       <PreprocessorDefinitions>QUEUE_USE_CONFORMANT_NEW;CRC32C_STATIC=1;PCRE2_STATIC;PCRE2_CODE_UNIT_WIDTH=8;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WINDOWS;_USRDLL;MIGOTO_DX=11;WIN32_LEAN_AND_MEAN;_WIN32_WINNT=_WIN32_WINNT_WINBLUE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>Async</ExceptionHandling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>
-$(SolutionDir);
-$(SolutionDir)HLSLDecompiler;
-$(SolutionDir)ThirdPartyLibs\Nektra-lib;
-$(SolutionDir)ThirdPartyLibs\nvapi-lib\nvapi-main;
-$(SolutionDir)ThirdPartyLibs\pcre2-lib\pcre2_x64-windows-static\include;
-$(SolutionDir)ThirdPartyLibs\DirectXTK-lib\include;
-$(SolutionDir)D3D_Shaders;
-      </AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)HLSLDecompiler;$(SolutionDir)ThirdPartyLibs\Nektra-lib;$(SolutionDir)ThirdPartyLibs\nvapi-lib\nvapi-main;$(SolutionDir)ThirdPartyLibs\pcre2-lib\pcre2_x64-windows-static\include;$(SolutionDir)ThirdPartyLibs\DirectXTK-lib\include;$(SolutionDir)D3D_Shaders;$(SolutionDir)ThirdPartyLibs\tiff\deps\include;$(SolutionDir)ThirdPartyLibs\tinyexr;$(SolutionDir)ThirdPartyLibs\stb</AdditionalIncludeDirectories>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -457,18 +432,7 @@ $(SolutionDir)D3D_Shaders;
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <ModuleDefinitionFile>d3d11Wrapper.def</ModuleDefinitionFile>
-      <AdditionalDependencies>
-$(SolutionDir)ThirdPartyLibs\Nektra-lib\NktHookLib64.lib;
-$(SolutionDir)ThirdPartyLibs\nvapi-lib\nvapi-main\amd64\nvapi64.lib;
-$(SolutionDir)ThirdPartyLibs\pcre2-lib\pcre2_x64-windows-static\lib\pcre2-8.lib;
-$(SolutionDir)ThirdPartyLibs\DirectXTK-lib\lib\x64\Release\DirectXTK.lib;
-XINPUT9_1_0.lib;
-d3dcompiler.lib;
-DXGI.lib;
-Shlwapi.lib;
-Dbghelp.lib;
-%(AdditionalDependencies)
-      </AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)ThirdPartyLibs\Nektra-lib\NktHookLib64.lib;$(SolutionDir)ThirdPartyLibs\nvapi-lib\nvapi-main\amd64\nvapi64.lib;$(SolutionDir)ThirdPartyLibs\pcre2-lib\pcre2_x64-windows-static\lib\pcre2-8.lib;$(SolutionDir)ThirdPartyLibs\DirectXTK-lib\lib\x64\Release\DirectXTK.lib;XINPUT9_1_0.lib;d3dcompiler.lib;DXGI.lib;Shlwapi.lib;Dbghelp.lib;$(SolutionDir)ThirdPartyLibs\tiff\deps\lib\tiff.lib;$(SolutionDir)ThirdPartyLibs\tiff\deps\lib\tiffxx.lib;$(SolutionDir)ThirdPartyLibs\tiff\deps\lib\libzs.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ForceSymbolReferences>CreateDXGIFactory</ForceSymbolReferences>
     </Link>
     <PostBuildEvent>
@@ -491,15 +455,7 @@ call "$(SolutionDir)CopyToGames.bat" "$(TargetDir)" "$(TargetedSDKArchitecture)"
       <PreprocessorDefinitions>QUEUE_USE_CONFORMANT_NEW;CRC32C_STATIC=1;PCRE2_STATIC;PCRE2_CODE_UNIT_WIDTH=8;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES=1;_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_COUNT=1;_WINDOWS;_USRDLL;MIGOTO_DX=11;WIN32_LEAN_AND_MEAN;_WIN32_WINNT=_WIN32_WINNT_WINBLUE;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>Async</ExceptionHandling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>
-$(SolutionDir);
-$(SolutionDir)HLSLDecompiler;
-$(SolutionDir)ThirdPartyLibs\Nektra-lib;
-$(SolutionDir)ThirdPartyLibs\nvapi-lib\nvapi-main;
-$(SolutionDir)ThirdPartyLibs\pcre2-lib\pcre2_x64-windows-static\include;
-$(SolutionDir)ThirdPartyLibs\DirectXTK-lib\include;
-$(SolutionDir)D3D_Shaders;
-      </AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)HLSLDecompiler;$(SolutionDir)ThirdPartyLibs\Nektra-lib;$(SolutionDir)ThirdPartyLibs\nvapi-lib\nvapi-main;$(SolutionDir)ThirdPartyLibs\pcre2-lib\pcre2_x64-windows-static\include;$(SolutionDir)ThirdPartyLibs\DirectXTK-lib\include;$(SolutionDir)D3D_Shaders;$(SolutionDir)ThirdPartyLibs\tiff\deps\include;$(SolutionDir)ThirdPartyLibs\tinyexr;$(SolutionDir)ThirdPartyLibs\stb</AdditionalIncludeDirectories>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -510,18 +466,7 @@ $(SolutionDir)D3D_Shaders;
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <ModuleDefinitionFile>d3d11Wrapper.def</ModuleDefinitionFile>
-      <AdditionalDependencies>
-$(SolutionDir)ThirdPartyLibs\Nektra-lib\NktHookLib64.lib;
-$(SolutionDir)ThirdPartyLibs\nvapi-lib\nvapi-main\amd64\nvapi64.lib;
-$(SolutionDir)ThirdPartyLibs\pcre2-lib\pcre2_x64-windows-static\lib\pcre2-8.lib;
-$(SolutionDir)ThirdPartyLibs\DirectXTK-lib\lib\x64\Release\DirectXTK.lib;
-XINPUT9_1_0.lib;
-d3dcompiler.lib;
-DXGI.lib;
-Shlwapi.lib;
-Dbghelp.lib;
-%(AdditionalDependencies)
-      </AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)ThirdPartyLibs\Nektra-lib\NktHookLib64.lib;$(SolutionDir)ThirdPartyLibs\nvapi-lib\nvapi-main\amd64\nvapi64.lib;$(SolutionDir)ThirdPartyLibs\pcre2-lib\pcre2_x64-windows-static\lib\pcre2-8.lib;$(SolutionDir)ThirdPartyLibs\DirectXTK-lib\lib\x64\Release\DirectXTK.lib;XINPUT9_1_0.lib;d3dcompiler.lib;DXGI.lib;Shlwapi.lib;Dbghelp.lib;$(SolutionDir)ThirdPartyLibs\tiff\deps\lib\tiff.lib;$(SolutionDir)ThirdPartyLibs\tiff\deps\lib\tiffxx.lib;$(SolutionDir)ThirdPartyLibs\tiff\deps\lib\libzs.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ForceSymbolReferences>CreateDXGIFactory</ForceSymbolReferences>
     </Link>
     <PostBuildEvent>
