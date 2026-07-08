@@ -395,6 +395,19 @@ enum class AsyncQueryType
 	COUNTER,
 };
 
+enum EDScreenshotFormat
+{
+	EDSCREENSHOT_FORMAT_EXR,
+	EDSCREENSHOT_FORMAT_TIFF,
+	EDSCREENSHOT_FORMAT_INVALID
+};
+
+static EnumName_t<const wchar_t*, EDScreenshotFormat> ScreenshotFormatNames[] = {
+	{L"exr" , EDSCREENSHOT_FORMAT_EXR},
+	{L"tiff", EDSCREENSHOT_FORMAT_TIFF},
+	{NULL   , EDSCREENSHOT_FORMAT_INVALID} // End of list marker
+};
+
 struct Globals
 {
 	bool gInitialized;
@@ -602,6 +615,9 @@ struct Globals
 	std::map<UINT64, ShaderInfoData> mPixelShaderInfo;			// std::map so that ShaderUsage.txt is sorted - lookup time is O(log N)
 	std::map<UINT64, ShaderInfoData> mComputeShaderInfo;		// std::map so that ShaderUsage.txt is sorted - lookup time is O(log N)
 
+	// EDScreenshot section
+	EDScreenshotFormat mEDScreenshotFormat;
+
 	Globals() :
 
 		mSelectedRenderTargetSnapshot(0),
@@ -694,7 +710,8 @@ struct Globals
 		gWipeUserConfig(false),
 		user_config_dirty(0),
 		gLogInput(false),
-		dump_all_profiles(false)
+		dump_all_profiles(false),
+		mEDScreenshotFormat(EDSCREENSHOT_FORMAT_INVALID)
 	{
 		int i;
 

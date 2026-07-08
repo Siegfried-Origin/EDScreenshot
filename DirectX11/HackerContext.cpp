@@ -2685,6 +2685,62 @@ void HackerContext::InitIniParams()
 	G->constants_run = true;
 }
 
+
+// EDScreenshot file resolving supports
+#include <shlobj.h>
+#include <KnownFolders.h>
+#include "FrameExport.h"
+
+// Finds the screenshot filename to use for the next screenshot,
+// based on the current date and time and create the screenshot folder
+// if it doesn't exist yet.
+std::string getScreenshotFilename(const char* extension)
+{
+	const wchar_t* subfolder = L"ED Screenshot"; // TODO: G->ED_SCREENSHOT_SUBFOLDER
+
+	// Get screenshot location
+	wchar_t path_prefix[MAX_PATH] = { 0 };
+	{
+		PWSTR pictures_folder = NULL;
+		SHGetKnownFolderPath(FOLDERID_Pictures, 0, NULL, &pictures_folder);
+
+		// Destination direction
+		wcscat_s(path_prefix, MAX_PATH, pictures_folder);
+		wcscat_s(path_prefix, MAX_PATH, L"\\");
+		wcscat_s(path_prefix, MAX_PATH, subfolder);
+
+		CoTaskMemFree(pictures_folder);
+
+		// Ensures the path exists
+		CreateDirectoryEnsuringAccess(path_prefix);
+	}
+
+	// Append date and time to the screenshot
+	wchar_t file_prefix[MAX_PATH] = { 0 };
+	{
+		time_t ltime;
+		struct tm tm;
+
+		time(&ltime);
+		_localtime64_s(&tm, &ltime);
+		wcsftime(file_prefix, MAX_PATH, L"Screenshot-%Y-%m-%d-%H%M%S-", &tm);
+	}
+
+	wchar_t path[MAX_PATH] = { 0 };
+	char final_path[MAX_PATH] = { 0 };
+
+	wcscat_s(path, MAX_PATH, path_prefix);
+	wcscat_s(path, MAX_PATH, L"\\");
+	wcscat_s(path, MAX_PATH, file_prefix);
+
+	wcstombs(final_path, path, MAX_PATH);
+
+	std::string ret = final_path;
+
+	return ret + extension;
+}
+
+
 // This function makes sure that the StereoParams and IniParams resources
 // remain pinned whenever the game assigns shader resources:
 template <void (__stdcall ID3D11DeviceContext::*OrigSetShaderResources)(THIS_
@@ -2724,6 +2780,72 @@ void HackerContext::SetShaderResources(UINT StartSlot, UINT NumViews,
 		delete [] override_srvs;
 	} else {
 		(mOrigContext1->*OrigSetShaderResources)(StartSlot, NumViews, ppShaderResourceViews);
+	}
+
+	// EDScreenshot grabs the render target if the relevant shader is bound
+	if (mEDScreenshotTrigger &&
+		mCurrentPixelShader == 0x380822531cf1f3d4 &&
+		NumViews == 3) {
+		ID3D11View* const* views = (ID3D11View* const*)ppShaderResourceViews;
+
+		// We extract only the sharp image
+		// 0: LUT
+		// 1: sharp
+		// 2: blurred
+		const UINT i = 1;
+		ID3D11Resource* resource = nullptr;
+		views[i]->GetResource(&resource);
+
+		D3D11_RESOURCE_DIMENSION dim;
+		resource->GetType(&dim);
+
+		// Double check we have the right resource type
+		const bool correctResource =
+			resource &&
+			dim == D3D11_RESOURCE_DIMENSION_TEXTURE2D;
+
+		if (correctResource) {
+			try {
+				bool writeOK = false;
+				std::string save_path;
+
+				switch (G->mEDScreenshotFormat) {
+					case EDSCREENSHOT_FORMAT_EXR:
+						save_path = getScreenshotFilename(".exr");
+
+						writeOK = FrameExport::SaveR11G11B10TextureAsEXR(
+							this->mOrigDevice1,
+							this,
+							(ID3D11Texture2D*)resource,
+							save_path.c_str()
+						);
+						break;
+					default:
+						save_path = getScreenshotFilename(".tiff");
+
+						writeOK = FrameExport::SaveR11G11B10TextureAsTIFF(
+							this->mOrigDevice1,
+							this,
+							(ID3D11Texture2D*)resource,
+							save_path.c_str()
+						);
+						break;
+				}
+
+				if (writeOK) {
+					LogInfo("  ED Screenshot - %s\n", save_path.c_str());
+				}
+				else {
+					LogInfo("  ED Screenshot - Error while writting %s\n", save_path.c_str());
+				}
+			}
+			catch (std::exception& e) {
+				LogInfo("  ED Screenshot - error %s\n", e.what());
+			}
+
+			// We're done taking screenshot for this frame
+			mEDScreenshotTrigger = false;
+		}
 	}
 }
 

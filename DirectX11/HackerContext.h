@@ -110,6 +110,10 @@ struct MappedResourceInfo {
 
 class HackerContext : public ID3D11DeviceContext1
 {
+	// EDScreenshot modifications
+public:
+	bool mEDScreenshotTrigger = false;
+
 private:
 	ID3D11Device1 *mOrigDevice1;
 	ID3D11DeviceContext1 *mOrigContext1;

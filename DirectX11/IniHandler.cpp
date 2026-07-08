@@ -79,6 +79,7 @@ static Section RegularSections[] = {
 	{L"Preset", true},
 	{L"Include", true}, // Prefix so that it may be namespaced to allow included files to include more files with relative paths
 	{L"Loader", false},
+	{L"EDScreenshot", false},
 };
 
 // List of sections that will not trigger a warning if they contain a line
@@ -4033,6 +4034,12 @@ static void ForceFullScreen(HackerDevice *device, void *private_data)
 	swap_chain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
 }
 
+static void EDScreenshot(HackerDevice* device, void* private_data)
+{
+	LogInfo("> Capture ED screenshot standard resolution\n");
+	device->GetHackerContext()->mEDScreenshotTrigger = true;
+}
+
 static void warn_of_conflicting_d3dx(wchar_t *dll_ini_path)
 {
 	wchar_t exe_ini_path[MAX_PATH];
@@ -4346,6 +4353,10 @@ void LoadConfigFile()
 
 	// [Hunting]
 	ParseHuntingSection();
+
+	// [EDScreenshot]
+	RegisterIniKeyBinding(L"EDScreenshot", L"screenshot", EDScreenshot, NULL, 0, NULL);
+	G->mEDScreenshotFormat = GetIniEnumClass(L"EDScreenshot", L"format", EDSCREENSHOT_FORMAT_INVALID, NULL, ScreenshotFormatNames);
 
 	// Must be done prior to parsing any command list sections, as every
 	// section registered in this set will be a candidate for optimisation:
