@@ -1,0 +1,6 @@
+[submodule "ThirdPartyLibs/stb"]
+	path = ThirdPartyLibs/stb
+	url = https://github.com/nothings/stb
+[submodule "ThirdPartyLibs/tinyexr"]
+	path = ThirdPartyLibs/tinyexr
+	url = https://github.com/syoyo/tinyexr.git

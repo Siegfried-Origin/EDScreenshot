@@ -23,8 +23,8 @@
 #include <filesystem>
 // TODO: We probably don't need this <filesystem> header
 // TODO: Remove this #define after we switch to C++17 and remove 'experimental'
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-#include <experimental/filesystem>
+//#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
+//#include <experimental/filesystem>
 
 #define INI_FILENAME L"d3dx.ini"
 
