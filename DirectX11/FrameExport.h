@@ -34,10 +34,10 @@ public:
     struct HDJob
     {
         std::string filename;
-        uint32_t width;
-        uint32_t height;
+        uint32_t tileWidth;
+        uint32_t tileHeight;
         std::vector<std::pair<int, int>> tilesPos;
-        std::vector<float> tilesImage;
+        std::vector<std::vector<float>> tilesImage;
     };
 
     static float DecodeR11G11B10Component(
@@ -77,8 +77,18 @@ public:
         int startX, int startY
     );
 
+    static bool AppendTile(
+        const std::vector<float>& tileData,
+        uint32_t tileWidth, uint32_t tileHeight,
+        std::vector<float>& imageData,
+        std::vector<float>& imageAlpha,
+        uint32_t width, uint32_t height,
+        int startX, int startY
+    );
+
     static void WriteEXRJob(std::shared_ptr<EXRJob> job);
     static void WriteTIFFJob(std::shared_ptr<TiffJob> job);
+    static void WriteHDJob(std::shared_ptr<HDJob> job);
 
     static bool SaveR11G11B10TextureAsEXR(
         ID3D11Device* device,

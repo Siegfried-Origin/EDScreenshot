@@ -2876,17 +2876,10 @@ void HackerContext::SetShaderResources(UINT StartSlot, UINT NumViews,
 				if (mEDScreenshotHDTrigger && mEDScreenshotHDCorrectTile) {
 					// Allocate memory on first call
 					if (!mEDScreenshotHDStorage) {
-						mEDScreenshotHDStorage = std::make_shared<FrameExport::TiffJob>();
-						mEDScreenshotHDStorage->filename = getScreenshotFilename(".tiff");
-#ifdef ED_SCREENSHOT_FULL_CAP
-						mEDScreenshotHDStorage->width  = 5 * currWidth;
-						mEDScreenshotHDStorage->height = 5 * currHeight;
-#else
-						mEDScreenshotHDStorage->width  = 4 * currWidth;
-						mEDScreenshotHDStorage->height = 4 * currHeight;
-#endif
-						mEDScreenshotHDStorage->image.resize(4 * mEDScreenshotHDStorage->width * mEDScreenshotHDStorage->height);
-						std::memset(mEDScreenshotHDStorage->image.data(), 0, sizeof(float) * mEDScreenshotHDStorage->image.size());
+						mEDScreenshotHDStorage = std::make_shared<FrameExport::HDJob>();
+						mEDScreenshotHDStorage->filename   = getScreenshotFilename(".tiff");
+						mEDScreenshotHDStorage->tileWidth  = currWidth;
+						mEDScreenshotHDStorage->tileHeight = currHeight;
 					}
 
 					// Check for capture progress
@@ -2905,26 +2898,22 @@ void HackerContext::SetShaderResources(UINT StartSlot, UINT NumViews,
 						}
 					}
 
-					// Append tile
-					FrameExport::AppendTextureTile(
+					mEDScreenshotHDStorage->tilesPos.push_back(std::pair<int, int>(mEDScreenshotTilePosX, mEDScreenshotTilePosY));
+					mEDScreenshotHDStorage->tilesImage.push_back(std::vector<float>(3 * currWidth * currHeight));
+
+					uint32_t width, height;
+
+					FrameExport::GetTexture(
 						this->mOrigDevice1,
 						this,
 						(ID3D11Texture2D*)resource,
-						mEDScreenshotHDStorage->image,
-						mEDScreenshotHDStorage->width,
-						mEDScreenshotHDStorage->height,
-#ifdef ED_SCREENSHOT_FULL_CAP
-						(1 + mEDScreenshotTilePosX) * currWidth / 2,
-						(1 + mEDScreenshotTilePosY) * currHeight / 2
-#else
-						mEDScreenshotTilePosX * currWidth / 2,
-						mEDScreenshotTilePosY * currHeight / 2
-#endif
+						mEDScreenshotHDStorage->tilesImage.back(),
+						width, height
 					);
 
 					// We finished HD capture
 					if (mEDScreenshotHDInProgressCount == 100) {
-						FrameExport::WriteTIFFJob(mEDScreenshotHDStorage);
+						FrameExport::WriteHDJob(mEDScreenshotHDStorage);
 						mEDScreenshotHDStorage.reset();
 						mEDScreenshotHDInProgressCount = 0;
 						mEDScreenshotHDTrigger = false;

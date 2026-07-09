@@ -1,6 +1,8 @@
 #include "FrameExport.h"
 
 #include <algorithm>
+
+#define _USE_MATH_DEFINES 
 #include <cmath>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -120,8 +122,8 @@ bool FrameExport::GetTexture(
     width = desc.Width;
     height = desc.Height;
 
-    if (textureData.size() < 4 * width * height) {
-        textureData.resize(4 * width * height);
+    if (textureData.size() < 3 * width * height) {
+        textureData.resize(3 * width * height);
     }
 
     for (int y = 0; y < height; y++) {
@@ -134,12 +136,10 @@ bool FrameExport::GetTexture(
             float r, g, b;
             DecodeR11G11B10Float(row[x], r, g, b);
 
-            const int idx = 4 * (y * width + x);
+            const int idx = 3 * (y * width + x);
             textureData[idx + 0] = r;
             textureData[idx + 1] = g;
             textureData[idx + 2] = b;
-
-            textureData[idx + 3] = 1.0f; // Alpha channel
         }
     }
 
@@ -263,6 +263,91 @@ bool FrameExport::AppendTextureTile(
 }
 
 
+bool FrameExport::AppendTile(
+    const std::vector<float>& tileData,
+    uint32_t tileWidth, uint32_t tileHeight,
+    std::vector<float>& imageData,
+    std::vector<float>& imageAlpha,
+    uint32_t width, uint32_t height,
+    int startX, int startY)
+{
+    // --- CLIPPING LOGIC FOR ALL 4 SIDES ---
+
+    // 1. Find the intersection in Image Space
+    // The leftmost pixel we can copy is either 0 or startX, whichever is further right
+    int intersectLeft = std::max(0, startX);
+    // The rightmost pixel is either image width or the end of the tile, whichever is further left
+    int intersectRight = std::min((int)width, (int)(startX + tileWidth));
+
+    int intersectTop = std::max(0, startY);
+    int intersectBottom = std::min((int)height, (int)(startY + tileHeight));
+
+    // If there is no overlap, just return true (nothing to do)
+    if (intersectLeft >= intersectRight || intersectTop >= intersectBottom) {
+        return true;
+    }
+
+    // 2. Map Image Space intersection back to Tile Space (Source Texture coordinates)
+    // Example: if startX is -10, and intersectLeft is 0, we must start reading at tile pixel 10.
+    int srcXStart = intersectLeft - startX;
+    int srcYStart = intersectTop - startY;
+    int srcXEnd = intersectRight - startX;
+    int srcYEnd = intersectBottom - startY;
+
+    // --- CLIPPING LOGIC END ---
+    const float featherMargin = std::min(tileWidth, tileHeight) / 2.f;
+
+    // Loop through the source texture using our calculated tile-space boundaries
+    for (int srcY = srcYStart; srcY < srcYEnd; srcY++) {
+        for (int srcX = srcXStart; srcX < srcXEnd; srcX++) {
+            // Calculate destination index using the same relative offset
+            // Destination X = startX + source X
+            const int dstX = startX + srcX;
+            const int dstY = startY + srcY;
+
+            const int srcIdx = srcY * tileWidth + srcX;
+            const int dstIdx = dstY * width + dstX;
+            
+            float feather = tileWidth * 0.25f;
+
+            float dx = std::min((float)srcX, (float)(tileWidth - 1 - srcX));
+            float dy = std::min((float)srcY, (float)(tileHeight - 1 - srcY));
+
+            float wx = std::min(std::max(dx / feather, 0.f), 1.f);
+            float wy = std::min(std::max(dy / feather, 0.f), 1.f);
+
+            // Do not attenuate border
+            if (startX <= 0) {
+                wx = 1.f;
+            }
+            if (startX + tileWidth >= width) {
+                wx = 1.f;
+            }
+
+            if (startY <= 0) {
+                wy = 1.f;
+            }
+            if (startY + tileHeight >= height) {
+                wy = 1.f;
+            }
+
+            // Hann window for smooth blending
+            wx = 0.5f - 0.5f * std::cos(wx * M_PI);
+            wy = 0.5f - 0.5f * std::cos(wy * M_PI);
+
+            const float weight = wx * wy;
+
+            imageData[3 * dstIdx + 0] = std::fma(weight, tileData[3 * srcIdx + 0], imageData[3 * dstIdx + 0]);
+            imageData[3 * dstIdx + 1] = std::fma(weight, tileData[3 * srcIdx + 1], imageData[3 * dstIdx + 1]);
+            imageData[3 * dstIdx + 2] = std::fma(weight, tileData[3 * srcIdx + 2], imageData[3 * dstIdx + 2]);
+            imageAlpha[dstIdx] += weight;
+        }
+    }
+
+    return true;
+}
+
+
 void FrameExport::WriteEXRJob(std::shared_ptr<EXRJob> job)
 {
     std::thread([job]() {
@@ -321,6 +406,53 @@ void FrameExport::WriteEXRJob(std::shared_ptr<EXRJob> job)
                 FreeEXRErrorMessage(err);
             }
         }
+    }).detach();
+}
+
+
+void FrameExport::WriteHDJob(std::shared_ptr<HDJob> job)
+{
+    std::thread([job]() {
+        std::shared_ptr<TiffJob> tiffJob = std::make_shared<TiffJob>();
+
+        tiffJob->filename = job->filename;
+        tiffJob->width = job->tileWidth * 5;
+        tiffJob->height = job->tileHeight * 5;
+
+        tiffJob->image = std::vector<float>(tiffJob->width * tiffJob->height * 3, 0.0f);
+        std::vector<float> alpha(tiffJob->width * tiffJob->height, 0.0f);
+
+        for (size_t iTile = 0; iTile < job->tilesPos.size(); iTile++) {
+            const int tileX = job->tilesPos[iTile].first;
+            const int tileY = job->tilesPos[iTile].second;
+
+            const std::vector<float>& tileImage = job->tilesImage[iTile];
+
+            AppendTile(
+                tileImage,
+                job->tileWidth,
+                job->tileHeight,
+                tiffJob->image,
+                alpha,
+                tiffJob->width,
+                tiffJob->height,
+                (1 + tileX) * job->tileWidth / 2.f,
+                (1 + tileY) * job->tileHeight / 2.f
+            );
+        }
+
+        // Normalize the combined image by the alpha values
+        for (size_t i = 0; i < alpha.size(); i++) {
+            const float a = alpha[i];
+
+            if (a > 0.0f) {
+                tiffJob->image[3 * i + 0] /= a;
+                tiffJob->image[3 * i + 1] /= a;
+                tiffJob->image[3 * i + 2] /= a;
+            }
+        }
+
+        WriteTIFFJob(tiffJob);
     }).detach();
 }
 
@@ -422,20 +554,8 @@ void FrameExport::WriteTIFFJob(std::shared_ptr<TiffJob> job)
         TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, TIFFDefaultStripSize(tif, 0));
 
         // Convert from RGBA to RGB
-        std::vector<float> rgbImage(3 * job->width * job->height);
-
-        for (int i = 0; i < job->width * job->height; i++) {
-            float r = job->image[4 * i + 0];
-            float g = job->image[4 * i + 1];
-            float b = job->image[4 * i + 2];
-            float a = job->image[4 * i + 3];
-            rgbImage[3 * i + 0] = r / a;
-            rgbImage[3 * i + 1] = g / a;
-            rgbImage[3 * i + 2] = b / a;
-        }
-
         for (int y = 0; y < job->height; y++) {
-            const float* row = &rgbImage[y * job->width * 3];
+            const float* row = &job->image[y * job->width * 3];
 
             TIFFWriteScanline(tif, (void*)row, y, 0);
         }
