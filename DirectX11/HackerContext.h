@@ -11,6 +11,9 @@
 //#include "ResourceHash.h"
 #include "Globals.h"
 
+#include <memory>
+#include "FrameExport.h"
+
 // {A3046B1E-336B-4D90-9FD6-234BC09B8687}
 DEFINE_GUID(IID_HackerContext,
 0xa3046b1e, 0x336b, 0x4d90, 0x9f, 0xd6, 0x23, 0x4b, 0xc0, 0x9b, 0x86, 0x87);
@@ -113,6 +116,16 @@ class HackerContext : public ID3D11DeviceContext1
 	// EDScreenshot modifications
 public:
 	bool mEDScreenshotTrigger = false;
+	bool mEDScreenshotHDTrigger = false;
+	bool mEDScreenshotHDCorrectTile = false;
+	float* mEDScreenshotMappedMemory = nullptr;
+	float mEDScreenshotHDValues[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
+	int mEDScreenshotTilePosX = 0;
+	int mEDScreenshotTilePosY = 0;
+	std::shared_ptr<FrameExport::TiffJob> mEDScreenshotHDStorage = nullptr;
+	
+	bool mEDScreenshotHDInProgress[100] = { false };
+	uint32_t mEDScreenshotHDInProgressCount = 0;
 
 private:
 	ID3D11Device1 *mOrigDevice1;

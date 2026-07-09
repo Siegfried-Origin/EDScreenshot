@@ -1307,6 +1307,30 @@ STDMETHODIMP HackerContext::Map(THIS_
 
 	TrackAndDivertMap(hr, pResource, Subresource, MapType, MapFlags, pMappedResource);
 
+	// EDScreenshot - capture the constant buffer values refering to tile position
+	if (mEDScreenshotHDTrigger && mCurrentPixelShader == 0x3044f812b3899334) {
+		EnterCriticalSectionPretty(&G->mCriticalSection);
+		const uint32_t hash = GetResourceHash(pResource);
+		LeaveCriticalSection(&G->mCriticalSection);
+
+		// Sanity checks to ensure we are using the correct buffer
+		if (hash == 0x4fd99a4a) {
+			D3D11_RESOURCE_DIMENSION dim;
+			ID3D11Buffer* buf = NULL;
+			pResource->GetType(&dim);
+
+			if (dim == D3D11_RESOURCE_DIMENSION_BUFFER) {
+				D3D11_BUFFER_DESC buf_desc;
+				ID3D11Buffer* buf = (ID3D11Buffer*)pResource;
+				buf->GetDesc(&buf_desc);
+
+				if (buf_desc.ByteWidth >= 5376) {
+					mEDScreenshotMappedMemory = (float*)pMappedResource->pData;
+				}
+			}
+		}
+	}
+
 	return hr;
 }
 
@@ -1316,6 +1340,38 @@ STDMETHODIMP_(void) HackerContext::Unmap(THIS_
 	/* [annotation] */
 	__in  UINT Subresource)
 {
+	if (mEDScreenshotMappedMemory) {
+		EnterCriticalSectionPretty(&G->mCriticalSection);
+		const uint32_t hash = GetResourceHash(pResource);
+		LeaveCriticalSection(&G->mCriticalSection);
+
+		if (hash == 0x4fd99a4a) {
+			std::memcpy(mEDScreenshotHDValues, &mEDScreenshotMappedMemory[1124], sizeof(mEDScreenshotHDValues));
+
+			// Check if the values corresponds to a tile capture used in HD
+			// screenshot mode
+			mEDScreenshotHDCorrectTile =
+				(
+					mEDScreenshotHDValues[0] != 0.0f ||
+					mEDScreenshotHDValues[1] != 0.0f ||
+					mEDScreenshotHDValues[2] != 1.0f ||
+					mEDScreenshotHDValues[3] != 1.0f
+					)
+				&&
+				(
+					mEDScreenshotHDValues[0] - mEDScreenshotHDValues[2] != 0.0f &&
+					mEDScreenshotHDValues[1] - mEDScreenshotHDValues[3] != 0.0f
+				);
+
+			if (mEDScreenshotHDCorrectTile) {
+				mEDScreenshotTilePosX = (int)(8.f * mEDScreenshotHDValues[0]);
+				mEDScreenshotTilePosY = (int)(8.f * (1.f - mEDScreenshotHDValues[3]));
+			}
+
+			mEDScreenshotMappedMemory = nullptr;
+		}
+	}
+
 	TrackAndDivertUnmap(pResource, Subresource);
 	mOrigContext1->Unmap(pResource, Subresource);
 }
@@ -2723,7 +2779,7 @@ std::string getScreenshotFilename(const char* extension)
 
 		time(&ltime);
 		_localtime64_s(&tm, &ltime);
-		wcsftime(file_prefix, MAX_PATH, L"Screenshot-%Y-%m-%d-%H%M%S-", &tm);
+		wcsftime(file_prefix, MAX_PATH, L"Screenshot-%Y-%m-%d-%H%M%S", &tm);
 	}
 
 	wchar_t path[MAX_PATH] = { 0 };
@@ -2782,69 +2838,139 @@ void HackerContext::SetShaderResources(UINT StartSlot, UINT NumViews,
 		(mOrigContext1->*OrigSetShaderResources)(StartSlot, NumViews, ppShaderResourceViews);
 	}
 
-	// EDScreenshot grabs the render target if the relevant shader is bound
-	if (mEDScreenshotTrigger &&
-		mCurrentPixelShader == 0x380822531cf1f3d4 &&
-		NumViews == 3) {
-		ID3D11View* const* views = (ID3D11View* const*)ppShaderResourceViews;
+	if (mEDScreenshotHDTrigger || mEDScreenshotTrigger) {
+		// Check if this is the correct resource and shader stage
+		
+		if (mCurrentPixelShader == 0x380822531cf1f3d4 &&
+			NumViews == 3) {
+			ID3D11View* const* views = (ID3D11View* const*)ppShaderResourceViews;
 
-		// We extract only the sharp image
-		// 0: LUT
-		// 1: sharp
-		// 2: blurred
-		const UINT i = 1;
-		ID3D11Resource* resource = nullptr;
-		views[i]->GetResource(&resource);
+			// We extract only the sharp image
+			// 0: LUT      783c9ef2
+			// 1: sharp    3ae23a30
+			// 2: blurred  3315d2b5
+			const UINT i = 1;
+			ID3D11Resource* resource = nullptr;
+			views[i]->GetResource(&resource);
 
-		D3D11_RESOURCE_DIMENSION dim;
-		resource->GetType(&dim);
+			D3D11_RESOURCE_DIMENSION dim;
+			resource->GetType(&dim);
 
-		// Double check we have the right resource type
-		const bool correctResource =
-			resource &&
-			dim == D3D11_RESOURCE_DIMENSION_TEXTURE2D;
+			// Double check we have the right resource type
+			const bool correctResource =
+				resource &&
+				dim == D3D11_RESOURCE_DIMENSION_TEXTURE2D;
 
-		if (correctResource) {
-			try {
-				bool writeOK = false;
-				std::string save_path;
+			if (correctResource) {
+				// In case we're in HD screenshot mode, we accumulate the current
+				// render target into the HD screenshot buffer
 
-				switch (G->mEDScreenshotFormat) {
-					case EDSCREENSHOT_FORMAT_EXR:
-						save_path = getScreenshotFilename(".exr");
+				uint32_t currWidth, currHeight;
+				FrameExport::GetTextureSize(
+					this->mOrigDevice1,
+					this,
+					(ID3D11Texture2D*)resource,
+					&currWidth, &currHeight
+				);
 
-						writeOK = FrameExport::SaveR11G11B10TextureAsEXR(
-							this->mOrigDevice1,
-							this,
-							(ID3D11Texture2D*)resource,
-							save_path.c_str()
-						);
-						break;
-					default:
-						save_path = getScreenshotFilename(".tiff");
+				if (mEDScreenshotHDTrigger && mEDScreenshotHDCorrectTile) {
+					// Allocate memory on first call
+					if (!mEDScreenshotHDStorage) {
+						mEDScreenshotHDStorage = std::make_shared<FrameExport::TiffJob>();
+						mEDScreenshotHDStorage->filename = getScreenshotFilename(".tiff");
+						mEDScreenshotHDStorage->width = 4 * currWidth;
+						mEDScreenshotHDStorage->height = 4 * currHeight;
+						mEDScreenshotHDStorage->image.resize(3 * mEDScreenshotHDStorage->width * mEDScreenshotHDStorage->height);
+					}
 
-						writeOK = FrameExport::SaveR11G11B10TextureAsTIFF(
-							this->mOrigDevice1,
-							this,
-							(ID3D11Texture2D*)resource,
-							save_path.c_str()
-						);
-						break;
+					// Check for capture progress
+					for (int iY = 0; iY < 2; iY++) {
+						const int targetY = 1 + mEDScreenshotTilePosY + iY;
+
+						for (int iX = 0; iX < 2; iX++) {
+							const int targetX = 1 + mEDScreenshotTilePosX + iX;
+
+							if (targetY >= 0 && targetY < 10 &&
+								targetX >= 0 && targetX < 10 &&
+								!mEDScreenshotHDInProgress[targetY * 10 + targetX]) {
+								mEDScreenshotHDInProgress[targetY * 10 + targetX] = true;
+								++mEDScreenshotHDInProgressCount;
+							}
+						}
+					}
+
+					// Append tile
+					FrameExport::AppendTextureTile(
+						this->mOrigDevice1,
+						this,
+						(ID3D11Texture2D*)resource,
+						mEDScreenshotHDStorage->image,
+						mEDScreenshotHDStorage->width,
+						mEDScreenshotHDStorage->height,
+						mEDScreenshotTilePosX * currWidth / 2,
+						mEDScreenshotTilePosY * currHeight / 2
+					);
+
+					// We finished HD capture
+					if (mEDScreenshotHDInProgressCount == 100) {
+						FrameExport::WriteTIFFJob(mEDScreenshotHDStorage);
+						mEDScreenshotHDStorage.reset();
+						mEDScreenshotHDInProgressCount = 0;
+						mEDScreenshotHDTrigger = false;
+						std::memset(mEDScreenshotHDInProgress, false, sizeof(mEDScreenshotHDInProgress));
+					}
+
+					mEDScreenshotHDValues[0] = 0.0f;
+					mEDScreenshotHDValues[1] = 0.0f;
+					mEDScreenshotHDValues[2] = 1.0f;
+					mEDScreenshotHDValues[3] = 1.0f;
+					mEDScreenshotTilePosX = 0;
+					mEDScreenshotTilePosY = 0;
+					mEDScreenshotHDCorrectTile = false;
 				}
+				else if (mEDScreenshotTrigger) {
+					bool writeOK = false;
+					std::string save_path;
 
-				if (writeOK) {
-					LogInfo("  ED Screenshot - %s\n", save_path.c_str());
-				}
-				else {
-					LogInfo("  ED Screenshot - Error while writting %s\n", save_path.c_str());
+					try {
+						switch (G->mEDScreenshotFormat) {
+							case EDSCREENSHOT_FORMAT_EXR:
+								save_path = getScreenshotFilename(".exr");
+
+								writeOK = FrameExport::SaveR11G11B10TextureAsEXR(
+									this->mOrigDevice1,
+									this,
+									(ID3D11Texture2D*)resource,
+									save_path.c_str()
+								);
+								break;
+							default:
+								save_path = getScreenshotFilename(".tiff");
+
+								writeOK = FrameExport::SaveR11G11B10TextureAsTIFF(
+									this->mOrigDevice1,
+									this,
+									(ID3D11Texture2D*)resource,
+									save_path.c_str()
+								);
+								break;
+						}
+
+						if (writeOK) {
+							LogInfo("  ED Screenshot - %s\n", save_path.c_str());
+						}
+						else {
+							LogInfo("  ED Screenshot - Error while writting %s\n", save_path.c_str());
+						}
+					}
+					catch (std::exception& e) {
+						LogInfo("  ED Screenshot - error %s\n", e.what());
+					}
+
+					// We're done taking screenshot for this frame
+					mEDScreenshotTrigger = false;
 				}
 			}
-			catch (std::exception& e) {
-				LogInfo("  ED Screenshot - error %s\n", e.what());
-			}
-
-			// We're done taking screenshot for this frame
-			mEDScreenshotTrigger = false;
 		}
 	}
 }
