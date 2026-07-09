@@ -4040,6 +4040,12 @@ static void EDScreenshot(HackerDevice* device, void* private_data)
 	device->GetHackerContext()->mEDScreenshotTrigger = true;
 }
 
+static void EDScreenshotHD(HackerDevice* device, void* private_data)
+{
+	LogInfo("> Capture ED screenshot standard resolution\n");
+	device->GetHackerContext()->mEDScreenshotHDTrigger = true;
+}
+
 static void warn_of_conflicting_d3dx(wchar_t *dll_ini_path)
 {
 	wchar_t exe_ini_path[MAX_PATH];
@@ -4356,6 +4362,7 @@ void LoadConfigFile()
 
 	// [EDScreenshot]
 	RegisterIniKeyBinding(L"EDScreenshot", L"screenshot", EDScreenshot, NULL, 0, NULL);
+	RegisterIniKeyBinding(L"EDScreenshot", L"screenshothd", EDScreenshotHD, NULL, 0, NULL);
 	G->mEDScreenshotFormat = GetIniEnumClass(L"EDScreenshot", L"format", EDSCREENSHOT_FORMAT_INVALID, NULL, ScreenshotFormatNames);
 
 	// Must be done prior to parsing any command list sections, as every
