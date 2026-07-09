@@ -151,7 +151,7 @@ bool FrameExport::AppendTextureTile(
     ID3D11Texture2D* srcTex,
     std::vector<float>& textureData,
     uint32_t width, uint32_t height,
-    uint32_t startX, uint32_t startY)
+    int startX, int startY)
 {
     D3D11_TEXTURE2D_DESC desc;
     srcTex->GetDesc(&desc);
@@ -160,10 +160,30 @@ bool FrameExport::AppendTextureTile(
         return false;
     }
 
-    if (startX + desc.Width > width ||
-        startY + desc.Height > height) {
-        return false;
+    // --- CLIPPING LOGIC FOR ALL 4 SIDES ---
+
+       // 1. Find the intersection in Image Space
+       // The leftmost pixel we can copy is either 0 or startX, whichever is further right
+    int intersectLeft = std::max(0, startX);
+    // The rightmost pixel is either image width or the end of the tile, whichever is further left
+    int intersectRight = std::min((int)width, (int)(startX + desc.Width));
+
+    int intersectTop = std::max(0, startY);
+    int intersectBottom = std::min((int)height, (int)(startY + desc.Height));
+
+    // If there is no overlap, just return true (nothing to do)
+    if (intersectLeft >= intersectRight || intersectTop >= intersectBottom) {
+        return true;
     }
+
+    // 2. Map Image Space intersection back to Tile Space (Source Texture coordinates)
+    // Example: if startX is -10, and intersectLeft is 0, we must start reading at tile pixel 10.
+    int srcXStart = intersectLeft - startX;
+    int srcYStart = intersectTop - startY;
+    int srcXEnd   = intersectRight - startX;
+    int srcYEnd   = intersectBottom - startY;
+
+    // --- CLIPPING LOGIC END ---
 
     D3D11_TEXTURE2D_DESC stagingDesc = desc;
     stagingDesc.BindFlags = 0;
@@ -172,7 +192,6 @@ bool FrameExport::AppendTextureTile(
     stagingDesc.MiscFlags = 0;
 
     ID3D11Texture2D* staging = nullptr;
-
     HRESULT hr = device->CreateTexture2D(&stagingDesc, nullptr, &staging);
 
     if (FAILED(hr)) {
@@ -193,17 +212,23 @@ bool FrameExport::AppendTextureTile(
         textureData.resize(3 * width * height);
     }
 
-    for (int y = 0; y < desc.Height; y++) {
+    // Loop through the source texture using our calculated tile-space boundaries
+    for (int y = srcYStart; y < srcYEnd; y++) {
         const uint32_t* row =
             (const uint32_t*)
             ((const uint8_t*)mapped.pData +
                 y * mapped.RowPitch);
 
-        for (int x = 0; x < desc.Width; x++) {
+        for (int x = srcXStart; x < srcXEnd; x++) {
             float r, g, b;
             DecodeR11G11B10Float(row[x], r, g, b);
 
-            const int idx = (startY + y) * width + (startX + x);
+            // Calculate destination index using the same relative offset
+            // Destination X = startX + source X
+            const int destX = startX + x;
+            const int destY = startY + y;
+            const int idx = destY * width + destX;
+
             textureData[3 * idx + 0] = r;
             textureData[3 * idx + 1] = g;
             textureData[3 * idx + 2] = b;
@@ -215,6 +240,7 @@ bool FrameExport::AppendTextureTile(
 
     return true;
 }
+
 
 
 void FrameExport::WriteEXRJob(std::shared_ptr<EXRJob> job)

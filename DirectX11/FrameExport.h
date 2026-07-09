@@ -65,7 +65,7 @@ public:
         ID3D11Texture2D* srcTex,
         std::vector<float>& textureData,
         uint32_t width, uint32_t height,
-        uint32_t startX, uint32_t startY
+        int startX, int startY
     );
 
     static void WriteEXRJob(std::shared_ptr<EXRJob> job);
