@@ -2878,9 +2878,15 @@ void HackerContext::SetShaderResources(UINT StartSlot, UINT NumViews,
 					if (!mEDScreenshotHDStorage) {
 						mEDScreenshotHDStorage = std::make_shared<FrameExport::TiffJob>();
 						mEDScreenshotHDStorage->filename = getScreenshotFilename(".tiff");
-						mEDScreenshotHDStorage->width = 4 * currWidth;
+#ifdef ED_SCREENSHOT_FULL_CAP
+						mEDScreenshotHDStorage->width  = 5 * currWidth;
+						mEDScreenshotHDStorage->height = 5 * currHeight;
+#else
+						mEDScreenshotHDStorage->width  = 4 * currWidth;
 						mEDScreenshotHDStorage->height = 4 * currHeight;
-						mEDScreenshotHDStorage->image.resize(3 * mEDScreenshotHDStorage->width * mEDScreenshotHDStorage->height);
+#endif
+						mEDScreenshotHDStorage->image.resize(4 * mEDScreenshotHDStorage->width * mEDScreenshotHDStorage->height);
+						std::memset(mEDScreenshotHDStorage->image.data(), 0, sizeof(float) * mEDScreenshotHDStorage->image.size());
 					}
 
 					// Check for capture progress
@@ -2890,10 +2896,10 @@ void HackerContext::SetShaderResources(UINT StartSlot, UINT NumViews,
 						for (int iX = 0; iX < 2; iX++) {
 							const int targetX = 1 + mEDScreenshotTilePosX + iX;
 
-							if (targetY >= 0 && targetY < 10 &&
-								targetX >= 0 && targetX < 10 &&
-								!mEDScreenshotHDInProgress[targetY * 10 + targetX]) {
-								mEDScreenshotHDInProgress[targetY * 10 + targetX] = true;
+							if (targetY >= 0 && targetY < ED_SCRENSHOT_N_SUBTILES_Y &&
+								targetX >= 0 && targetX < ED_SCRENSHOT_N_SUBTILES_X &&
+								!mEDScreenshotHDInProgress[targetY * ED_SCRENSHOT_N_SUBTILES_X + targetX]) {
+								mEDScreenshotHDInProgress[targetY * ED_SCRENSHOT_N_SUBTILES_X + targetX] = true;
 								++mEDScreenshotHDInProgressCount;
 							}
 						}
@@ -2907,8 +2913,13 @@ void HackerContext::SetShaderResources(UINT StartSlot, UINT NumViews,
 						mEDScreenshotHDStorage->image,
 						mEDScreenshotHDStorage->width,
 						mEDScreenshotHDStorage->height,
+#ifdef ED_SCREENSHOT_FULL_CAP
+						(1 + mEDScreenshotTilePosX) * currWidth / 2,
+						(1 + mEDScreenshotTilePosY) * currHeight / 2
+#else
 						mEDScreenshotTilePosX * currWidth / 2,
 						mEDScreenshotTilePosY * currHeight / 2
+#endif
 					);
 
 					// We finished HD capture

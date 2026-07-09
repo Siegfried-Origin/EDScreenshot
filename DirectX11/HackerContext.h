@@ -111,6 +111,14 @@ struct MappedResourceInfo {
 // Hierarchy:
 //  HackerContext <- ID3D11DeviceContext1 <- ID3D11DeviceContext <- ID3D11DeviceChild <- IUnknown
 
+#define ED_SCRENSHOT_N_TILES_X 5
+#define ED_SCRENSHOT_N_TILES_Y 5
+
+#define ED_SCRENSHOT_N_SUBTILES_X 10
+#define ED_SCRENSHOT_N_SUBTILES_Y 10
+
+#define ED_SCREENSHOT_FULL_CAP
+
 class HackerContext : public ID3D11DeviceContext1
 {
 	// EDScreenshot modifications
@@ -124,7 +132,7 @@ public:
 	int mEDScreenshotTilePosY = 0;
 	std::shared_ptr<FrameExport::TiffJob> mEDScreenshotHDStorage = nullptr;
 	
-	bool mEDScreenshotHDInProgress[100] = { false };
+	bool mEDScreenshotHDInProgress[ED_SCRENSHOT_N_SUBTILES_X * ED_SCRENSHOT_N_SUBTILES_Y] = { false };
 	uint32_t mEDScreenshotHDInProgressCount = 0;
 
 private:

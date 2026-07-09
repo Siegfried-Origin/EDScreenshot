@@ -1,5 +1,6 @@
 #include "FrameExport.h"
 
+#include <algorithm>
 #include <cmath>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -119,8 +120,8 @@ bool FrameExport::GetTexture(
     width = desc.Width;
     height = desc.Height;
 
-    if (textureData.size() < 3 * width * height) {
-        textureData.resize(3 * width * height);
+    if (textureData.size() < 4 * width * height) {
+        textureData.resize(4 * width * height);
     }
 
     for (int y = 0; y < height; y++) {
@@ -133,10 +134,12 @@ bool FrameExport::GetTexture(
             float r, g, b;
             DecodeR11G11B10Float(row[x], r, g, b);
 
-            const int idx = y * width + x;
-            textureData[3 * idx + 0] = r;
-            textureData[3 * idx + 1] = g;
-            textureData[3 * idx + 2] = b;
+            const int idx = 4 * (y * width + x);
+            textureData[idx + 0] = r;
+            textureData[idx + 1] = g;
+            textureData[idx + 2] = b;
+
+            textureData[idx + 3] = 1.0f; // Alpha channel
         }
     }
 
@@ -162,8 +165,8 @@ bool FrameExport::AppendTextureTile(
 
     // --- CLIPPING LOGIC FOR ALL 4 SIDES ---
 
-       // 1. Find the intersection in Image Space
-       // The leftmost pixel we can copy is either 0 or startX, whichever is further right
+    // 1. Find the intersection in Image Space
+    // The leftmost pixel we can copy is either 0 or startX, whichever is further right
     int intersectLeft = std::max(0, startX);
     // The rightmost pixel is either image width or the end of the tile, whichever is further left
     int intersectRight = std::min((int)width, (int)(startX + desc.Width));
@@ -208,9 +211,7 @@ bool FrameExport::AppendTextureTile(
         return false;
     }
 
-    if (textureData.size() < 3 * width * height) {
-        textureData.resize(3 * width * height);
-    }
+    const float featherMargin = std::min(desc.Width, desc.Height) / 2.f;
 
     // Loop through the source texture using our calculated tile-space boundaries
     for (int y = srcYStart; y < srcYEnd; y++) {
@@ -227,11 +228,31 @@ bool FrameExport::AppendTextureTile(
             // Destination X = startX + source X
             const int destX = startX + x;
             const int destY = startY + y;
-            const int idx = destY * width + destX;
+            const int idx = 4 * (destY * width + destX);
 
-            textureData[3 * idx + 0] = r;
-            textureData[3 * idx + 1] = g;
-            textureData[3 * idx + 2] = b;
+            float distToEdge = std::min({
+                (float)x,
+                (float)(desc.Width - 1 - x),
+                (float)y,
+                (float)(desc.Height - 1 - y)
+            });
+
+            // We do not blend on image border
+            //bool isImageEdge = (destX == 0 || destX == (int)width - 1 || destY == 0 || destY == (int)height - 1);
+
+            float weight = 1.0f;
+            
+            //if (!isImageEdge) {
+            weight = std::min(std::max(distToEdge / featherMargin, 0.1f), 1.0f);
+            //}
+
+            textureData[idx + 0] = std::fma(weight, r, textureData[idx + 0]);
+            textureData[idx + 1] = std::fma(weight, g, textureData[idx + 1]);
+            textureData[idx + 2] = std::fma(weight, b, textureData[idx + 2]);
+            textureData[idx + 3] += weight;
+            //textureData[3 * idx + 0] = r;
+            //textureData[3 * idx + 1] = g;
+            //textureData[3 * idx + 2] = b;
         }
     }
 
@@ -240,7 +261,6 @@ bool FrameExport::AppendTextureTile(
 
     return true;
 }
-
 
 
 void FrameExport::WriteEXRJob(std::shared_ptr<EXRJob> job)
@@ -401,11 +421,25 @@ void FrameExport::WriteTIFFJob(std::shared_ptr<TiffJob> job)
         TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_ADOBE_DEFLATE);
         TIFFSetField(tif, TIFFTAG_ROWSPERSTRIP, TIFFDefaultStripSize(tif, 0));
 
+        // Convert from RGBA to RGB
+        std::vector<float> rgbImage(3 * job->width * job->height);
+
+        for (int i = 0; i < job->width * job->height; i++) {
+            float r = job->image[4 * i + 0];
+            float g = job->image[4 * i + 1];
+            float b = job->image[4 * i + 2];
+            float a = job->image[4 * i + 3];
+            rgbImage[3 * i + 0] = r / a;
+            rgbImage[3 * i + 1] = g / a;
+            rgbImage[3 * i + 2] = b / a;
+        }
+
         for (int y = 0; y < job->height; y++) {
-            const float* row = &job->image[y * job->width * 3];
+            const float* row = &rgbImage[y * job->width * 3];
 
             TIFFWriteScanline(tif, (void*)row, y, 0);
         }
+
 
         TIFFClose(tif);
     }).detach();

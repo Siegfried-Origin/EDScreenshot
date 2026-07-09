@@ -31,6 +31,15 @@ public:
         std::vector<float> image;
     };
 
+    struct HDJob
+    {
+        std::string filename;
+        uint32_t width;
+        uint32_t height;
+        std::vector<std::pair<int, int>> tilesPos;
+        std::vector<float> tilesImage;
+    };
+
     static float DecodeR11G11B10Component(
         uint32_t mantissa,
         uint32_t exponent,
