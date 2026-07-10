@@ -22,12 +22,12 @@ Depending on your configuration, images are saved in **OpenEXR** or **32-bit flo
 
 ### Option A: Using the Installer (Recommended)
 1. Install [EDHM](https://bluemystical.github.io/edhm-api/).
-2. Navigate to the [Latest Releases](https://github.com/Siegfried-Origin/ED-HDR-Screenshot/releases/latest).
+2. Navigate to the [Latest Releases](https://github.com/Siegfried-Origin/EDScreenshot/releases/latest).
 3. Download and run `EDScreenshotInstaller`.
 
 ### Option B: Manual Installation
 1. Install [EDHM](https://bluemystical.github.io/edhm-api/).
-2. Download the latest `ED.Screenshot.vXXX.zip` from the [Releases page](https://github.com/Siegfried-Origin/ED-HDR-Screenshot/releases/latest).
+2. Download the latest `ED.Screenshot.vXXX.zip` from the [Releases page](https://github.com/Siegfried-Origin/EDScreenshot/releases/latest).
 3. Locate your Elite Dangerous installation folder. 
    * *Example:* `C:\Program Files (x86)\Steam\steamapps\common\Elite Dangerous\Products\elite-dangerous-odyssey-64`
 4. Replace the existing `d3d11.dll` with the version provided in the ZIP file.
