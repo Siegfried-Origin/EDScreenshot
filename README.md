@@ -1,4 +1,4 @@
-# ED HDR Screenshot
+# ED Screenshot
 
 A specialized fork of [3Dmigoto](https://github.com/bo3b/3Dmigoto) designed exclusively for **Elite Dangerous**. 
 
