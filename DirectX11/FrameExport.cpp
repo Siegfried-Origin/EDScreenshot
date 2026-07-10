@@ -417,9 +417,13 @@ void FrameExport::WriteHDJob(std::shared_ptr<HDJob> job)
         std::shared_ptr<ImageJob> writeJob = std::make_shared<ImageJob>();
 
         writeJob->filename = job->filename;
-        writeJob->width = job->tileWidth * 5;
-        writeJob->height = job->tileHeight * 5;
-
+#if 0
+        writeJob->width  = 5 * job->tileWidth;
+        writeJob->height = 5 * job->tileHeight;
+#else
+        writeJob->width  = 4 * job->tileWidth;
+        writeJob->height = 4 * job->tileHeight;
+#endif
         writeJob->image = std::vector<float>(writeJob->width * writeJob->height * 3, 0.0f);
         std::vector<float> alpha(writeJob->width * writeJob->height, 0.0f);
 
@@ -437,8 +441,13 @@ void FrameExport::WriteHDJob(std::shared_ptr<HDJob> job)
                 alpha,
                 writeJob->width,
                 writeJob->height,
+#if 0
                 (1 + tileX) * job->tileWidth / 2.f,
                 (1 + tileY) * job->tileHeight / 2.f
+#else
+                tileX * job->tileWidth / 2.f,
+                tileY * job->tileHeight / 2.f
+#endif
             );
         }
 
@@ -490,7 +499,6 @@ void FrameExport::WriteTIFFJob(std::shared_ptr<ImageJob> job)
 
             TIFFWriteScanline(tif, (void*)row, y, 0);
         }
-
 
         TIFFClose(tif);
     }).detach();
