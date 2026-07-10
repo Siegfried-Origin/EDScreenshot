@@ -1,58 +1,69 @@
 # ED HDR Screenshot
 
-This repository is a fork of 3Dmigoto specifically designed for Elite Dangerous.
+A specialized fork of [3Dmigoto](https://github.com/bo3b/3Dmigoto) designed exclusively for **Elite Dangerous**. 
 
-Do not attempt to use it with other games.
+> [!WARNING]  
+> This tool is built specifically for Elite Dangerous. Do not attempt to use it with other games, as it may cause instability.
 
-If you are looking for the original 3Dmigoto project, please download it from:
-https://github.com/bo3b/3Dmigoto/releases
+## Overview
 
-## Capture HDR Screenshots in Elite Dangerous
+This mod enables the capture of High Dynamic Range (HDR) screenshots within Elite Dangerous. By capturing images directly from the game's rendering pipeline, this tool allows you to bypass standard game or Steam screenshots that have "baked-in" post-processing.
 
-This mod enables HDR screenshot capture in Elite Dangerous.
+Depending on your configuration, images are saved in **OpenEXR** or **32-bit float TIFF** (default) formats. This provides the flexibility to adjust exposure, tone mapping, and bloom during post-processing.
 
-When you press **F12** (configurable), the tool captures an HDR image from the game's rendering pipeline. Depending on the format specified in the configuration, it is saved in **OpenEXR** format or 32bit float **TIFF** format (default), allowing you to adjust exposure, tone mapping, bloom, and other post-processing effects that are normally baked into standard game or Steam screenshots.
+### Key Features
+- **HDR Capture:** Save raw lighting data for professional editing.
+- **High Fidelity:** Compatible with high supersampling settings.
+- **EDHM Integration:** Designed to work seamlessly with [EDHM](https://bluemystical.github.io/edhm-api/) by replacing the `d3d11.dll` file.
 
-The images are saved in the **ED Screenshot** subdirectory of your Pictures folder.
-
-You can edit the resulting EXR files with software such as **GIMP** or **Affinity Photo** and TIFF files in **Adobe Lightroom**.
-
-This tool is designed to be compatible with EDHM by replacing the `d3d11.dll` file used by EDHM: https://bluemystical.github.io/edhm-api/
-
-Although the tool can run without EDHM, installing EDHM is strongly recommended because:
-
-1. EDHM is an outstanding tool.
-2. The installation instructions below assume that EDHM is already installed.
+---
 
 ## Installation
-1. Install EDHM: https://bluemystical.github.io/edhm-api/
-2. Get to the latest release: https://github.com/Siegfried-Origin/ED-HDR-Screenshot/releases/latest
-3. Download the ZIP file `ED.HDR.Screenshot.vXXX.zip` from the list.
-4. Navigate to your Elite Dangerous installation folder (for example: `C:\Program Files (x86)\Steam\steamapps\common\Elite Dangerous\Products\elite-dangerous-odyssey-64`).
-5. Replace the existing `d3d11.dll` with the one included in the ZIP file.
-6. Copy `EDHM-ini\3rdPartyMods\EDScreenshot.ini` from the ZIP file to your `EDHM-ini\3rdPartyMods` folder.
 
-You can now press `F12` to capture an HDR screenshot.
+### Option A: Using the Installer (Recommended)
+1. Install [EDHM](https://bluemystical.github.io/edhm-api/).
+2. Navigate to the [Latest Releases](https://github.com/Siegfried-Origin/ED-HDR-Screenshot/releases/latest).
+3. Download and run `EDScreenshotInstaller`.
 
-The captured images will be saved in the `ED Screenshot` subfolder of your user's `Pictures` folder.
+### Option B: Manual Installation
+1. Install [EDHM](https://bluemystical.github.io/edhm-api/).
+2. Download the latest `ED.Screenshot.vXXX.zip` from the [Releases page](https://github.com/Siegfried-Origin/ED-HDR-Screenshot/releases/latest).
+3. Locate your Elite Dangerous installation folder. 
+   * *Example:* `C:\Program Files (x86)\Steam\steamapps\common\Elite Dangerous\Products\elite-dangerous-odyssey-64`
+4. Replace the existing `d3d11.dll` with the version provided in the ZIP file.
+5. Copy `EDHM-ini\3rdPartyMods\EDScreenshot.ini` from the ZIP into your local `EDHM-ini\3rdPartyMods` folder.
 
-## Additional Information
+---
 
-* In the game's main menu, ensure that **Options → Graphics → Quality → Supersampling** is set to **1.0 or higher**. Screenshots are captured at the internal rendering resolution, so increasing supersampling can be used to generate higher-resolution captures, even in Open Play.
-* This tool can be used together with the **Clean Screenshot Mod** from EDHM-UI if you want to remove holographic UI elements from your screenshots.
+## Usage & Configuration
 
-## Limitations
+### Capturing Screenshots
+- **Standard HDR Capture:** Press `F12` (default).
+- **Save Location:** Images are saved to `%USERPROFILE%\Pictures\ED Screenshot`.
+- **Post-Processing:** 
+  - `.exr` files can be edited in **GIMP** or **Affinity Photo**.
+  - `.tiff` files can be edited in **Adobe Lightroom**.
 
-* High-resolution screenshots taken with **Alt+F10** are not supported.
+### Configuration
+The configuration file is located at:  
+`...\Elite Dangerous\Products\elite-dangerous-odyssey-64\EDHM-ini\3rdPartyMods\EDScreenshot.ini`
 
-* The output directory is currently fixed to:
+| Feature | Setting | Note |
+| :--- | :--- | :--- |
+| **File Format** | `format = tiff` or `exr` | Change to `exr` for OpenEXR format. |
+| **Standard Hotkey**| `screenshot = no_modifiers VK_F12` | Change the key assigned to capture. |
+| **High-Res Mode** | `;screenshothd = ALT VK_F10` | Remove the `;` (uncomment) to enable HD captures. *Note: This is slow and impacts performance of the high resolution screen capture process.* |
 
-  ```
-  %USERPROFILE%\Pictures\ED Screenshot
-  ```
+---
 
-* Colors will not match Steam or native in-game screenshots exactly. This is expected: Elite Dangerous composites the blurred image and applies tone mapping and other post-processing effects before producing the final image.
+## Additional Tips & Limitations
 
-  The original HDR data is preserved in the EXR files, allowing you to reproduce, or improve upon, the game's final appearance during post-processing.
+### Improving Quality
+To increase the resolution of your captures, go to **Options → Graphics → Quality → Supersampling** in the game menu and set it to **1.0 or higher**. Because screenshots are captured at the internal rendering resolution, higher supersampling results in sharper images.
 
-  Support for extracting the game's color LUTs and a more complete editing guide may be added in a future release.
+### Compatibility
+This tool is compatible with the **Clean Screenshot Mod** from EDHM-UI for removing holographic UI elements.
+
+### Known Limitations
+- **Fixed Directory:** The output folder is currently hardcoded to `%USERPROFILE%\Pictures\ED Screenshot`.
+- **Color Accuracy:** Images will not match Steam or native screenshots exactly. This is because Elite Dangerous applies tone mapping and blurring after the pipeline stage where this tool captures the data. However, this allows you to apply your own professional tone mapping in post-production.
