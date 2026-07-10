@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ED HDR Screenshot | Capture the Galaxy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #0a0c10; 
+            color: #e2e8f0;
+        }
+        .code-font { font-family: 'JetBrains Mono', monospace; }
+        .glass { 
+            background: rgba(255, 255, 255, 0.03); 
+            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+        }
+        .text-gradient {
+            background: linear-gradient(to right, #ff7100, #ffb000);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .bg-space {
+            /* Subtle orange glow from the top to match a star/nebula feel */
+            background-image: radial-gradient(circle at 50% -20%, #3d2105 0%, #0a0c10 80%);
+        }
+        .btn-primary {
+            background-color: #ff7100;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #ffb000;
+            box-shadow: 0 0 20px rgba(255, 113, 0, 0.4);
+        }
+        .accent-orange { color: #ff7100; }
+        .border-orange { border-color: #ff7100; }
+    </style>
+</head>
+<body class="bg-space min-h-screen">
+    <!-- Navigation -->
+    <nav class="flex justify-between items-center p-6 max-w-6xl mx-auto">
+        <div class="text-xl font-bold tracking-tighter flex items-center gap-2">
+            <i class="fa-solid fa-camera-retro text-[#ff7100]"></i> 
+            <span>ED <span class="text-[#ff7100]">HDR</span> Screenshot</span>
+        </div>
+        <div class="flex gap-6 text-sm font-medium">
+            <a href="https://github.com/Siegfried-Origin/EDScreenshot" class="hover:text-sky-400 transition">GitHub</a>
+            <a href="#install" class="hover:text-[#ff7100] transition">Installation</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="max-w-4xl mx-auto text-center py-20 px-6">
+        <h1 class="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight">
+            Capture the Galaxy in <span class="text-gradient">True HDR</span>
+        </h1>
+        <p class="text-lg md:text-xl text-slate-400 mb-10 leading-relaxed max-w-2xl mx-auto">
+            A screenshot tool for Elite Dangerous. Bypass baked-in post-processing and capture raw rendering data for ultimate control in post-production.
+        </p>
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+            <a href="https://github.com/Siegfried-Origin/EDScreenshot/releases/latest" 
+               class="btn-primary text-white px-8 py-4 rounded-full font-bold transform hover:scale-105 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-download"></i> Download Latest Release
+            </a>
+            <a href="https://github.com/Siegfried-Origin/EDScreenshot" 
+               class="glass hover:bg-white/10 text-white px-8 py-4 rounded-full font-bold transition flex items-center justify-center gap-2">
+                <i class="fa-brands fa-github"></i> View Source
+            </a>
+        </div>
+    </header>
+
+    <!-- Features Grid -->
+    <section class="max-w-6xl mx-auto px-6 py-20 grid md:grid-cols-3 gap-8">
+        <div class="glass p-8 rounded-3xl hover:border-[#ff7100]/50 transition group border-b-4 border-b-transparent hover:border-b-[#ff7100]">
+            <div class="w-12 h-12 bg-[#ff7100]/20 text-[#ffb000] rounded-lg flex items-center justify-center mb-6 group-hover:bg-[#ff7100] group-hover:text-white transition">
+                <i class="fa-solid fa-layer-group text-xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-3">Raw Pipeline Access</h3>
+            <p class="text-slate-400 leading-relaxed">Captures images directly from the rendering pipeline, preserving high dynamic range data before tone mapping.</p>
+        </div>
+
+        <div class="glass p-8 rounded-3xl hover:border-[#ff7100]/50 transition group border-b-4 border-b-transparent hover:border-b-[#ff7100]">
+            <div class="w-12 h-12 bg-[#ff7100]/20 text-[#ffb000] rounded-lg flex items-center justify-center mb-6 group-hover:bg-[#ff7100] group-hover:text-white transition">
+                <i class="fa-solid fa-file-image text-xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-3">Pro Formats</h3>
+            <p class="text-slate-400 leading-relaxed">Save your captures in <span class="text-[#ffb000] font-semibold">OpenEXR</span> or <span class="text-[#ffb000] font-semibold">32-bit TIFF</span> for use in Lightroom, GIMP, or Affinity Photo.</p>
+        </div>
+
+        <div class="glass p-8 rounded-3xl hover:border-[#ff7100]/50 transition group border-b-4 border-b-transparent hover:border-b-[#ff7100]">
+            <div class="w-12 h-12 bg-[#ff7100]/20 text-[#ffb000] rounded-lg flex items-center justify-center mb-6 group-hover:bg-[#ff7100] group-hover:text-white transition">
+                <i class="fa-solid fa-plug text-xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-3">EDHM Compatible</h3>
+            <p class="text-slate-400 leading-relaxed">Seamlessly integrates with EDHM by replacing the d3d11.dll, allowing you to use both tools simultaneously.</p>
+        </div>
+    </section>
+
+    <!-- Installation Section -->
+    <section id="install" class="max-w-4xl mx-auto px-6 py-20">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold mb-4">Quick Start Guide</h2>
+            <div class="h-1 w-20 bg-[#ff7100] mx-auto rounded-full"></div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+            <div class="space-y-8">
+                <div class="flex gap-4">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-[#ff7100] text-white flex items-center justify-center font-bold">1</div>
+                    <div>
+                        <h4 class="font-bold text-lg">Install EDHM</h4>
+                        <p class="text-slate-400">
+                            This tool is designed to work alongside the EDHM-UI.<br />
+                            <a href="https://bluemystical.github.io/edhm-api/" class="text-[#ffb000] hover:text-[#ffb000] transition">Download EDHM-UI</a>.
+                        </p>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-[#ff7100] text-white flex items-center justify-center font-bold">2</div>
+                    <div>
+                        <h4 class="font-bold text-lg">Download the Tool</h4>
+                        <p class="text-slate-400">
+                            Grab the latest installer or ZIP from the GitHub releases page.<br />
+                            <a href="https://github.com/Siegfried-Origin/EDScreenshot/releases/latest" class="text-[#ffb000] hover:text-[#ffb000] transition">Download ED Screenshot</a>.
+                        </p>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-[#ff7100] text-white flex items-center justify-center font-bold">3</div>
+                    <div>
+                        <h4 class="font-bold text-lg">Run & Capture</h4>
+                        <p class="text-slate-400">Launch the game and press <kbd class="code-font px-2 py-1 bg-slate-800 rounded border border-slate-600 text-[#ffb000] text-sm">F12</kbd> to take your first HDR shot.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass p-6 rounded-3xl border-l-4 border-l-[#ff7100]">
+                <h4 class="text-lg font-bold mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info text-[#ffb000]"></i> Pro Tip
+                </h4>
+                <p class="text-slate-400 leading-relaxed mb-4">
+                    For the highest possible resolution, increase your <span class="text-white font-semibold">Supersampling</span> to 1.0 or higher in the game's Graphics Quality settings.
+                </p>
+                <div class="code-font text-xs p-3 bg-black/40 rounded border border-white/5 text-slate-500">
+                    Output path: <br>
+                    %USERPROFILE%\Pictures\ED Screenshot
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="max-w-6xl mx-auto px-6 py-12 border-t border-white/5 text-center text-slate-500 text-sm">
+        <p>© <script>document.write(new Date().getFullYear())</script> ED HDR Screenshot. Not affiliated with Frontier Developments.</p>
+        <div class="flex justify-center gap-4 mt-4">
+            <a href="https://github.com/Siegfried-Origin/EDScreenshot" class="hover:text-[#ffb000] transition">GitHub</a>
+        </div>
+    </footer>
+</body>
+</html>
