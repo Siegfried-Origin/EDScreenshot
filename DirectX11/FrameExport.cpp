@@ -237,22 +237,12 @@ bool FrameExport::AppendTextureTile(
                 (float)(desc.Height - 1 - y)
             });
 
-            // We do not blend on image border
-            //bool isImageEdge = (destX == 0 || destX == (int)width - 1 || destY == 0 || destY == (int)height - 1);
-
-            float weight = 1.0f;
-            
-            //if (!isImageEdge) {
-            weight = std::min(std::max(distToEdge / featherMargin, 0.1f), 1.0f);
-            //}
+            float weight = std::min(std::max(distToEdge / featherMargin, 0.1f), 1.0f);
 
             textureData[idx + 0] = std::fma(weight, r, textureData[idx + 0]);
             textureData[idx + 1] = std::fma(weight, g, textureData[idx + 1]);
             textureData[idx + 2] = std::fma(weight, b, textureData[idx + 2]);
             textureData[idx + 3] += weight;
-            //textureData[3 * idx + 0] = r;
-            //textureData[3 * idx + 1] = g;
-            //textureData[3 * idx + 2] = b;
         }
     }
 
@@ -348,7 +338,7 @@ bool FrameExport::AppendTile(
 }
 
 
-void FrameExport::WriteEXRJob(std::shared_ptr<EXRJob> job)
+void FrameExport::WriteEXRJob(std::shared_ptr<ImageJob> job)
 {
     std::thread([job]() {
         EXRHeader header;
@@ -359,10 +349,21 @@ void FrameExport::WriteEXRJob(std::shared_ptr<EXRJob> job)
 
         image.num_channels = 3;
 
+        std::vector<float> images[3];
+        const size_t numPixels = job->width * job->height;
+
+        for (size_t iImage = 0; iImage < 3; iImage++) {
+            images[iImage].resize(numPixels);
+
+            for (size_t iPx = 0; iPx < numPixels; iPx++) {
+                images[iImage][iPx] = job->image[3 * iPx + iImage];
+            }
+        }
+
         float* image_ptr[3];
-        image_ptr[0] = job->images[0].data(); // B
-        image_ptr[1] = job->images[1].data(); // G
-        image_ptr[2] = job->images[2].data(); // R
+        image_ptr[0] = images[2].data(); // B
+        image_ptr[1] = images[1].data(); // G
+        image_ptr[2] = images[0].data(); // R
 
         image.images = (unsigned char**)image_ptr;
         image.width = job->width;
@@ -413,14 +414,14 @@ void FrameExport::WriteEXRJob(std::shared_ptr<EXRJob> job)
 void FrameExport::WriteHDJob(std::shared_ptr<HDJob> job)
 {
     std::thread([job]() {
-        std::shared_ptr<TiffJob> tiffJob = std::make_shared<TiffJob>();
+        std::shared_ptr<ImageJob> writeJob = std::make_shared<ImageJob>();
 
-        tiffJob->filename = job->filename;
-        tiffJob->width = job->tileWidth * 5;
-        tiffJob->height = job->tileHeight * 5;
+        writeJob->filename = job->filename;
+        writeJob->width = job->tileWidth * 5;
+        writeJob->height = job->tileHeight * 5;
 
-        tiffJob->image = std::vector<float>(tiffJob->width * tiffJob->height * 3, 0.0f);
-        std::vector<float> alpha(tiffJob->width * tiffJob->height, 0.0f);
+        writeJob->image = std::vector<float>(writeJob->width * writeJob->height * 3, 0.0f);
+        std::vector<float> alpha(writeJob->width * writeJob->height, 0.0f);
 
         for (size_t iTile = 0; iTile < job->tilesPos.size(); iTile++) {
             const int tileX = job->tilesPos[iTile].first;
@@ -432,10 +433,10 @@ void FrameExport::WriteHDJob(std::shared_ptr<HDJob> job)
                 tileImage,
                 job->tileWidth,
                 job->tileHeight,
-                tiffJob->image,
+                writeJob->image,
                 alpha,
-                tiffJob->width,
-                tiffJob->height,
+                writeJob->width,
+                writeJob->height,
                 (1 + tileX) * job->tileWidth / 2.f,
                 (1 + tileY) * job->tileHeight / 2.f
             );
@@ -446,95 +447,25 @@ void FrameExport::WriteHDJob(std::shared_ptr<HDJob> job)
             const float a = alpha[i];
 
             if (a > 0.0f) {
-                tiffJob->image[3 * i + 0] /= a;
-                tiffJob->image[3 * i + 1] /= a;
-                tiffJob->image[3 * i + 2] /= a;
+                writeJob->image[3 * i + 0] /= a;
+                writeJob->image[3 * i + 1] /= a;
+                writeJob->image[3 * i + 2] /= a;
             }
         }
 
-        WriteTIFFJob(tiffJob);
+        switch (job->format) {
+            case EDSCREENSHOT_FORMAT_EXR:
+                WriteEXRJob(writeJob);
+                break;
+            default:
+                WriteTIFFJob(writeJob);
+                break;
+        }
     }).detach();
 }
 
 
-bool FrameExport::SaveR11G11B10TextureAsEXR(
-    ID3D11Device* device,
-    ID3D11DeviceContext* context,
-    ID3D11Texture2D* srcTex,
-    const char* filename)
-{
-    D3D11_TEXTURE2D_DESC desc;
-    srcTex->GetDesc(&desc);
-
-    if (desc.Format != DXGI_FORMAT_R11G11B10_FLOAT) {
-        return false;
-    }
-
-    D3D11_TEXTURE2D_DESC stagingDesc = desc;
-    stagingDesc.BindFlags = 0;
-    stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-    stagingDesc.Usage = D3D11_USAGE_STAGING;
-    stagingDesc.MiscFlags = 0;
-
-    ID3D11Texture2D* staging = nullptr;
-
-    HRESULT hr = device->CreateTexture2D(
-        &stagingDesc,
-        nullptr,
-        &staging);
-
-    if (FAILED(hr)) {
-        return false;
-    }
-
-    context->CopyResource(staging, srcTex);
-
-    D3D11_MAPPED_SUBRESOURCE mapped;
-    hr = context->Map(staging, 0, D3D11_MAP_READ, 0, &mapped);
-
-    if (FAILED(hr)) {
-        staging->Release();
-        return false;
-    }
-
-    auto job = std::make_shared<EXRJob>();
-
-    job->filename = filename;
-    job->width = (int)desc.Width;
-    job->height = (int)desc.Height;
-
-    job->images[0].resize(job->width * job->height);
-    job->images[1].resize(job->width * job->height);
-    job->images[2].resize(job->width * job->height);
-
-    for (int y = 0; y < job->height; y++)
-    {
-        const uint32_t* row =
-            (const uint32_t*)
-            ((const uint8_t*)mapped.pData +
-                y * mapped.RowPitch);
-
-        for (int x = 0; x < job->width; x++) {
-            float r, g, b;
-            DecodeR11G11B10Float(row[x], r, g, b);
-
-            const int idx = y * job->width + x;
-            job->images[0][idx] = b;
-            job->images[1][idx] = g;
-            job->images[2][idx] = r;
-        }
-    }
-
-    context->Unmap(staging, 0);
-    staging->Release();
-
-    WriteEXRJob(job);
-
-    return true;
-}
-
-
-void FrameExport::WriteTIFFJob(std::shared_ptr<TiffJob> job)
+void FrameExport::WriteTIFFJob(std::shared_ptr<ImageJob> job)
 {
     std::thread([job]() {
         TIFF* tif = TIFFOpen(job->filename.c_str(), "w");
@@ -566,13 +497,38 @@ void FrameExport::WriteTIFFJob(std::shared_ptr<TiffJob> job)
 }
 
 
+bool FrameExport::SaveR11G11B10TextureAsEXR(
+    ID3D11Device* device,
+    ID3D11DeviceContext* context,
+    ID3D11Texture2D* srcTex,
+    const char* filename)
+{
+    auto job = std::make_shared<ImageJob>();
+
+    GetTexture(
+        device,
+        context,
+        srcTex,
+        job->image,
+        job->width,
+        job->height
+    );
+
+    job->filename = filename;
+
+    WriteEXRJob(job);
+
+    return true;
+}
+
+
 bool FrameExport::SaveR11G11B10TextureAsTIFF(
     ID3D11Device* device,
     ID3D11DeviceContext* context,
     ID3D11Texture2D* srcTex,
     const char* filename)
 {
-    auto job = std::make_shared<TiffJob>();
+    auto job = std::make_shared<ImageJob>();
 
     GetTexture(
         device,

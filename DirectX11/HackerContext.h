@@ -127,7 +127,6 @@ public:
 	bool mEDScreenshotHDTrigger = false;
 	bool mEDScreenshotHDCorrectTile = false;
 	float* mEDScreenshotMappedMemory = nullptr;
-	float mEDScreenshotHDValues[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
 	int mEDScreenshotTilePosX = 0;
 	int mEDScreenshotTilePosY = 0;
 	std::shared_ptr<FrameExport::HDJob> mEDScreenshotHDStorage = nullptr;

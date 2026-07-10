@@ -1346,26 +1346,27 @@ STDMETHODIMP_(void) HackerContext::Unmap(THIS_
 		LeaveCriticalSection(&G->mCriticalSection);
 
 		if (hash == 0x4fd99a4a) {
-			std::memcpy(mEDScreenshotHDValues, &mEDScreenshotMappedMemory[1124], sizeof(mEDScreenshotHDValues));
+            float borders[4] = { 0.f, 0.f, 1.f, 1.f };
+			std::memcpy(borders, &mEDScreenshotMappedMemory[1124], sizeof(borders));
 
 			// Check if the values corresponds to a tile capture used in HD
 			// screenshot mode
 			mEDScreenshotHDCorrectTile =
 				(
-					mEDScreenshotHDValues[0] != 0.0f ||
-					mEDScreenshotHDValues[1] != 0.0f ||
-					mEDScreenshotHDValues[2] != 1.0f ||
-					mEDScreenshotHDValues[3] != 1.0f
+					borders[0] != 0.0f ||
+					borders[1] != 0.0f ||
+					borders[2] != 1.0f ||
+					borders[3] != 1.0f
 					)
 				&&
 				(
-					mEDScreenshotHDValues[0] - mEDScreenshotHDValues[2] != 0.0f &&
-					mEDScreenshotHDValues[1] - mEDScreenshotHDValues[3] != 0.0f
+					borders[0] - borders[2] != 0.0f &&
+					borders[1] - borders[3] != 0.0f
 				);
 
 			if (mEDScreenshotHDCorrectTile) {
-				mEDScreenshotTilePosX = (int)(8.f * mEDScreenshotHDValues[0]);
-				mEDScreenshotTilePosY = (int)(8.f * (1.f - mEDScreenshotHDValues[3]));
+				mEDScreenshotTilePosX = (int)(8.f * borders[0]);
+				mEDScreenshotTilePosY = (int)(8.f * (1.f - borders[3]));
 			}
 
 			mEDScreenshotMappedMemory = nullptr;
@@ -2877,7 +2878,18 @@ void HackerContext::SetShaderResources(UINT StartSlot, UINT NumViews,
 					// Allocate memory on first call
 					if (!mEDScreenshotHDStorage) {
 						mEDScreenshotHDStorage = std::make_shared<FrameExport::HDJob>();
-						mEDScreenshotHDStorage->filename   = getScreenshotFilename(".tiff");
+
+						switch (G->mEDScreenshotFormat) {
+							case EDSCREENSHOT_FORMAT_EXR:
+								mEDScreenshotHDStorage->filename = getScreenshotFilename(".exr");
+								mEDScreenshotHDStorage->format = EDSCREENSHOT_FORMAT_EXR;
+								break;
+							default:
+								mEDScreenshotHDStorage->filename = getScreenshotFilename(".tiff");
+								mEDScreenshotHDStorage->format = EDSCREENSHOT_FORMAT_TIFF;
+								break;
+						}
+
 						mEDScreenshotHDStorage->tileWidth  = currWidth;
 						mEDScreenshotHDStorage->tileHeight = currHeight;
 					}
@@ -2920,10 +2932,6 @@ void HackerContext::SetShaderResources(UINT StartSlot, UINT NumViews,
 						std::memset(mEDScreenshotHDInProgress, false, sizeof(mEDScreenshotHDInProgress));
 					}
 
-					mEDScreenshotHDValues[0] = 0.0f;
-					mEDScreenshotHDValues[1] = 0.0f;
-					mEDScreenshotHDValues[2] = 1.0f;
-					mEDScreenshotHDValues[3] = 1.0f;
 					mEDScreenshotTilePosX = 0;
 					mEDScreenshotTilePosY = 0;
 					mEDScreenshotHDCorrectTile = false;

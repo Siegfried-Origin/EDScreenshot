@@ -6,6 +6,8 @@
 #include <d3d11_1.h>
 #endif
 
+#include "globals.h"
+
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -15,15 +17,7 @@
 class FrameExport
 {
 public:
-    struct EXRJob
-    {
-        std::string filename;
-        uint32_t width;
-        uint32_t height;
-        std::vector<float> images[3];
-    };
-
-    struct TiffJob
+    struct ImageJob
     {
         std::string filename;
         uint32_t width;
@@ -34,6 +28,7 @@ public:
     struct HDJob
     {
         std::string filename;
+        EDScreenshotFormat format;
         uint32_t tileWidth;
         uint32_t tileHeight;
         std::vector<std::pair<int, int>> tilesPos;
@@ -86,8 +81,8 @@ public:
         int startX, int startY
     );
 
-    static void WriteEXRJob(std::shared_ptr<EXRJob> job);
-    static void WriteTIFFJob(std::shared_ptr<TiffJob> job);
+    static void WriteEXRJob(std::shared_ptr<ImageJob> job);
+    static void WriteTIFFJob(std::shared_ptr<ImageJob> job);
     static void WriteHDJob(std::shared_ptr<HDJob> job);
 
     static bool SaveR11G11B10TextureAsEXR(
