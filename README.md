@@ -20,6 +20,11 @@ Depending on your configuration, images are saved in **OpenEXR** or **32-bit flo
 
 ## Installation
 
+> [!WARNING]  
+> This mod is a community-made project and is not affiliated with or endorsed by Frontier Developments.
+> It intercepts the game's rendering pipeline to capture HDR screenshots. By using this mod, you acknowledge that you do so at your own risk.
+> I cannot be held responsible for any bugs, incompatibilities, or any actions Frontier Developments may take regarding the use of third-party software.
+
 ### Option A: Using the Installer (Recommended)
 1. Install [EDHM](https://bluemystical.github.io/edhm-api/).
 2. Navigate to the [Latest Releases](https://github.com/Siegfried-Origin/EDScreenshot/releases/latest).
